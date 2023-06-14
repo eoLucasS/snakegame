@@ -12,6 +12,10 @@ var gameStarted; // Flag para verificar se o jogo foi iniciado
 var scoreElement;
 var highScoreElement;
 
+// Elementos do balão de instruções
+var instructionBalloon;
+var closeButton;
+
 // Direções
 var direction;
 var newDirection;
@@ -30,6 +34,22 @@ function init() {
     scoreElement = document.getElementById("score");
     highScoreElement = document.getElementById("highscore");
     gameStarted = false; // O jogo não foi iniciado ainda
+
+    // Elementos do balão de instruções
+    instructionBalloon = document.createElement("div");
+    instructionBalloon.id = "instruction-balloon";
+    instructionBalloon.innerHTML = "Para começar a jogar, clique em qualquer tecla do teclado para iniciar o jogo. Caso não pressione nenhuma tecla, o jogo não será iniciado. Divirta-se jogando!";
+    document.body.appendChild(instructionBalloon);
+
+    closeButton = document.createElement("span");
+    closeButton.id = "close-button";
+    closeButton.innerHTML = "X";
+    instructionBalloon.appendChild(closeButton);
+
+    closeButton.addEventListener("click", function() {
+        closeInstructionBalloon();
+    });
+
     document.addEventListener("keydown", keyDown);
     draw(); // Desenha a cobra e a maçã inicialmente
 
@@ -182,8 +202,9 @@ function updateScore() {
 // Evento de tecla pressionada
 function keyDown(event) {
     if (!gameStarted) {
-        // Inicia o jogo ao pressionar qualquer seta do teclado
+        // Inicia o jogo ao pressionar qualquer botão do teclado
         gameStarted = true;
+        closeInstructionBalloon();
     }
 
     switch (event.keyCode) {
@@ -208,6 +229,11 @@ function keyDown(event) {
             }
             break;
     }
+}
+
+// Fecha o balão de instruções
+function closeInstructionBalloon() {
+    instructionBalloon.style.display = "none";
 }
 
 // Inicializa o jogo quando a página é carregada

@@ -150,27 +150,27 @@ function isSnakeCollision(head) {
 
 // Gera a posição de uma nova maçã aleatoriamente, evitando a posição ocupada pela cobra
 function generateApple() {
-    var validPosition = false;
-    var randomX, randomY; // Move a declaração para fora do loop
-    
-    while (!validPosition) {
-      randomX = Math.floor(Math.random() * (canvas.width / tileSize));
-      randomY = Math.floor(Math.random() * (canvas.height / tileSize));
+  var validPosition = false;
+  var randomX, randomY; // Move a declaração para fora do loop
   
-      validPosition = true;
-  
-      // Verifica se a posição gerada está ocupada pela cobra
-      for (var i = 0; i < snake.length; i++) {
-        if (snake[i].x === randomX && snake[i].y === randomY) {
-          validPosition = false;
-          break;
-        }
+  while (!validPosition) {
+    randomX = Math.floor(Math.random() * (canvas.width / tileSize));
+    randomY = Math.floor(Math.random() * (canvas.height / tileSize));
+
+    validPosition = true;
+
+    // Verifica se a posição gerada está ocupada pela cobra
+    for (var i = 0; i < snake.length; i++) {
+      if (snake[i].x === randomX && snake[i].y === randomY) {
+        validPosition = false;
+        break;
       }
     }
-  
-    apple.x = randomX;
-    apple.y = randomY;
   }
+
+  apple.x = randomX;
+  apple.y = randomY;
+}
 
 // Aumenta o tamanho da cobra
 function increaseSnakeSize() {
@@ -200,31 +200,31 @@ function draw() {
 
 // Desenha a cobra
 function drawSnake() {
-    ctx.fillStyle = "#000000";
+  ctx.fillStyle = "#000000";
+  
+  for (var i = 0; i < snake.length; i++) {
+    var segment = snake[i];
+    ctx.fillStyle = "#000000"; // Cor do corpo da cobra
     
-    for (var i = 0; i < snake.length; i++) {
-      var segment = snake[i];
-      ctx.fillStyle = "#000000"; // Cor do corpo da cobra
+    ctx.fillRect(segment.x * tileSize, segment.y * tileSize, tileSize, tileSize);
+    
+    // Desenha a cabeça da cobra
+    if (i === 0) {
+      var x = segment.x * tileSize + tileSize / 2;
+      var y = segment.y * tileSize + tileSize / 2;
+      var radius = tileSize / 2;
       
-      ctx.fillRect(segment.x * tileSize, segment.y * tileSize, tileSize, tileSize);
+      // Desenha os olhos
+      ctx.beginPath();
+      ctx.arc(x - radius / 2, y - radius / 4, radius / 6, 0, 2 * Math.PI); // Olho esquerdo
+      ctx.arc(x + radius / 2, y - radius / 4, radius / 6, 0, 2 * Math.PI); // Olho direito
+      ctx.fillStyle = "#ff0000"; // Cor dos olhos vermelhos
+      ctx.fill();
       
-      // Desenha a cabeça da cobra
-      if (i === 0) {
-        var x = segment.x * tileSize + tileSize / 2;
-        var y = segment.y * tileSize + tileSize / 2;
-        var radius = tileSize / 2;
-        
-        // Desenha os olhos
-        ctx.beginPath();
-        ctx.arc(x - radius / 2, y - radius / 4, radius / 6, 0, 2 * Math.PI); // Olho esquerdo
-        ctx.arc(x + radius / 2, y - radius / 4, radius / 6, 0, 2 * Math.PI); // Olho direito
-        ctx.fillStyle = "#ff0000"; // Cor dos olhos vermelhos
-        ctx.fill();
-        
-        ctx.fillStyle = "#000000"; // Cor da cabeça da cobra
-      }
+      ctx.fillStyle = "#000000"; // Cor da cabeça da cobra
     }
   }
+}
 
 // Desenha a maçã
 function drawApple() {

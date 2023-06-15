@@ -7,7 +7,6 @@ var tileSize;
 var score;
 var highScore;
 var gameStarted; // Flag para verificar se o jogo foi iniciado
-var firstMove; // Flag para verificar se é a primeira jogada
 
 // Elementos do score e high score
 var scoreElement;
@@ -20,6 +19,7 @@ var closeButton;
 // Direções
 var direction;
 var newDirection;
+var firstMove; // Flag para verificar se é o primeiro movimento da cobra
 
 // Inicialização do jogo
 function init() {
@@ -32,16 +32,16 @@ function init() {
   highScore = localStorage.getItem("highScore") || 0;
   direction = "right";
   newDirection = "right";
+  firstMove = true;
   scoreElement = document.getElementById("score");
   highScoreElement = document.getElementById("highscore");
   gameStarted = false; // O jogo não foi iniciado ainda
-  firstMove = true; // É a primeira jogada
 
   // Elementos do balão de instruções
   instructionBalloon = document.createElement("div");
   instructionBalloon.id = "instruction-balloon";
   instructionBalloon.innerHTML =
-    "Para começar a jogar, clique nas setas do teclado para iniciar o jogo. Caso não pressione nenhuma tecla, o jogo não será iniciado. Divirta-se jogando!";
+    "Para começar a jogar, clique em qualquer tecla do teclado para iniciar o jogo. Caso não pressione nenhuma tecla, o jogo não será iniciado. Divirta-se jogando!";
   document.body.appendChild(instructionBalloon);
 
   closeButton = document.createElement("span");
@@ -183,6 +183,7 @@ function endGame() {
   snake = [{ x: 10, y: 10 }];
   score = 0;
   gameStarted = false; // O jogo foi finalizado
+  firstMove = true;
 }
 
 // Limpa o canvas
@@ -228,12 +229,7 @@ function drawSnake() {
 // Desenha a maçã
 function drawApple() {
   ctx.fillStyle = "red";
-  ctx.fillRect(
-    apple.x * tileSize,
-    apple.y * tileSize,
-    tileSize,
-    tileSize
-  );
+  ctx.fillRect(apple.x * tileSize, apple.y * tileSize, tileSize, tileSize);
 }
 
 // Atualiza o score e high score
@@ -245,56 +241,47 @@ function updateScore() {
 // Evento de tecla pressionada
 function keyDown(event) {
   if (!gameStarted) {
-    // Inicia o jogo ao pressionar uma tecla válida
-    if (
-      event.keyCode === 37 || // Esquerda
-      event.keyCode === 38 || // Cima
-      event.keyCode === 39 || // Direita
-      event.keyCode === 40 // Baixo
-    ) {
-      gameStarted = true;
-      closeInstructionBalloon();
-    }
+    // Inicia o jogo ao pressionar qualquer botão do teclado
+    gameStarted = true;
+    closeInstructionBalloon();
   }
 
-  if (gameStarted) {
-    switch (event.keyCode) {
-      case 37: // Esquerda
-        if (direction !== "right" || firstMove) {
-          newDirection = "left";
-          firstMove = false;
-        }
-        break;
-      case 38: // Cima
-        if (direction !== "down" || firstMove) {
-          newDirection = "up";
-          firstMove = false;
-        }
-        break;
-      case 39: // Direita
-        if (direction !== "left" || firstMove) {
-          newDirection = "right";
-          firstMove = false;
-        }
-        break;
-      case 40: // Baixo
-        if (direction !== "up" || firstMove) {
-          newDirection = "down";
-          firstMove = false;
-        }
-        break;
-    }
+  switch (event.keyCode) {
+    case 37: // Setinha para esquerda
+      if (direction !== "right" || firstMove) {
+        newDirection = "left";
+        firstMove = false;
+      }
+      break;
+    case 38: // Setinha para cima
+      if (direction !== "down" || firstMove) {
+        newDirection = "up";
+        firstMove = false;
+      }
+      break;
+    case 39: // Setinha para direita
+      if (direction !== "left" || firstMove) {
+        newDirection = "right";
+        firstMove = false;
+      }
+      break;
+    case 40: // Setinha para baixo
+      if (direction !== "up" || firstMove) {
+        newDirection = "down";
+        firstMove = false;
+      }
+      break;
   }
 }
 
 // Fecha o balão de instruções
 function closeInstructionBalloon() {
   if (instructionBalloon) {
-    instructionBalloon.parentNode.removeChild(instructionBalloon);
+    instructionBalloon.remove();
   }
 }
 
-// Inicializa o jogo quando a página é carregada
+// Inicializa o jogo ao carregar a página
 window.onload = function () {
   init();
   setInterval(gameLoop, 100);

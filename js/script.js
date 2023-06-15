@@ -228,8 +228,37 @@ function drawSnake() {
 
 // Desenha a maçã
 function drawApple() {
+  // Desenha o círculo da maçã
   ctx.fillStyle = "red";
-  ctx.fillRect(apple.x * tileSize, apple.y * tileSize, tileSize, tileSize);
+  ctx.beginPath();
+  ctx.arc(apple.x * tileSize + tileSize / 2, apple.y * tileSize + tileSize / 2, tileSize / 2, 0, 2 * Math.PI);
+  ctx.fill();
+
+  // Desenha o reflexo no topo da maçã
+  ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+  ctx.beginPath();
+  ctx.ellipse(
+    apple.x * tileSize + tileSize / 2,
+    apple.y * tileSize + tileSize / 2 - tileSize / 4,
+    tileSize / 2.5, tileSize / 6, 0, 0, 2 * Math.PI
+  );
+  ctx.fill();
+
+  // Desenha o cabo verde
+  ctx.strokeStyle = "green";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(apple.x * tileSize + tileSize / 2, apple.y * tileSize + tileSize / 2 - tileSize / 2);
+  ctx.lineTo(apple.x * tileSize + tileSize / 2, apple.y * tileSize + tileSize / 2 - tileSize / 2 - tileSize / 4);
+  ctx.stroke();
+
+  // Desenha a folha ao lado do cabo
+  ctx.strokeStyle = "green"; // Cor da folha
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(apple.x * tileSize + tileSize / 2, apple.y * tileSize + tileSize / 2 - tileSize / 2 - tileSize / 4);
+  ctx.lineTo(apple.x * tileSize + tileSize / 2 - tileSize / 6, apple.y * tileSize + tileSize / 2 - tileSize / 2 - tileSize / 4 - tileSize / 4);
+  ctx.stroke();
 }
 
 // Atualiza o score e high score

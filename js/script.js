@@ -7,6 +7,8 @@ var tileSize;
 var score;
 var highScore;
 var gameStarted; // Flag para verificar se o jogo foi iniciado
+var gameInterval; // Intervalo do jogo, para ajustar a velocidade
+var isPaused = false; // Flag para verificar se o jogo está pausado
 
 // Elementos do score e high score
 var scoreElement;
@@ -20,6 +22,16 @@ var closeButton;
 var direction;
 var newDirection;
 var firstMove; // Flag para verificar se é o primeiro movimento da cobra
+
+// Dificuldade
+var difficulty;
+var gameSpeed; // Velocidade do jogo, ajustável pela dificuldade
+
+// Power-ups
+var powerUp;
+var powerUpActive = false;
+var powerUpType;
+var powerUpTimeout;
 
 // Inicialização do jogo
 function init() {
@@ -36,6 +48,15 @@ function init() {
   scoreElement = document.getElementById("score");
   highScoreElement = document.getElementById("highscore");
   gameStarted = false; // O jogo não foi iniciado ainda
+
+  // Configurar a dificuldade
+  var difficultySelect = document.getElementById("difficulty");
+  difficultySelect.addEventListener("change", setDifficulty);
+  setDifficulty(); // Definir dificuldade inicial
+
+  // Configurar botão de pausa
+  var pauseButton = document.getElementById("pauseButton");
+  pauseButton.addEventListener("click", togglePause);
 
   // Elementos do balão de instruções
   instructionBalloon = document.createElement("div");
@@ -65,11 +86,49 @@ function init() {
   authorName.addEventListener("click", function () {
     window.open("https://bit.ly/43AxN7w", "_blank");
   });
+
+  generatePowerUp();
+}
+
+// Definir a dificuldade e ajustar a velocidade do jogo
+function setDifficulty() {
+  var difficultySelect = document.getElementById("difficulty");
+  difficulty = difficultySelect.value;
+  switch (difficulty) {
+    case "easy":
+      gameSpeed = 150;
+      break;
+    case "medium":
+      gameSpeed = 100;
+      break;
+    case "hard":
+      gameSpeed = 50;
+      break;
+  }
+  if (gameStarted && !isPaused) {
+    clearInterval(gameInterval);
+    gameInterval = setInterval(gameLoop, gameSpeed);
+  }
+}
+
+// Alternar o estado de pausa
+function togglePause() {
+  if (gameStarted) {
+    isPaused = !isPaused;
+    var pauseButton = document.getElementById("pauseButton");
+    if (isPaused) {
+      clearInterval(gameInterval);
+      pauseButton.textContent = "Despausar";
+    } else {
+      gameInterval = setInterval(gameLoop, gameSpeed);
+      pauseButton.textContent = "Pausar";
+    }
+  }
 }
 
 // Loop principal do jogo
 function gameLoop() {
-  if (gameStarted) {
+  if (gameStarted && !isPaused) {
     clearCanvas();
     update();
     draw();
@@ -83,6 +142,7 @@ function update() {
   moveSnake();
   checkCollision();
   checkAppleCollision();
+  checkPowerUpCollision();
 }
 
 // Move a cobra na direção atual
@@ -111,16 +171,49 @@ function moveSnake() {
 // Verifica colisões com as bordas e com a própria cobra
 function checkCollision() {
   var head = snake[0];
-  var hasCollision =
+  var hasCollisionWithWall =
     head.x < 0 ||
     head.y < 0 ||
     head.x >= canvas.width / tileSize ||
-    head.y >= canvas.height / tileSize ||
-    isSnakeCollision(head);
+    head.y >= canvas.height / tileSize;
+  var hasCollisionWithSelf =
+    isSnakeCollision(head) && (!powerUpActive || powerUpType !== "immunity");
 
-  if (hasCollision) {
+  if (hasCollisionWithWall) {
+    if (powerUpActive && powerUpType === "immunity") {
+      // Cobra está imune e colidiu com a parede, mudar direção
+      if (head.x < 0) {
+        head.x = 0;
+        newDirection = head.y < canvas.height / tileSize / 2 ? "down" : "up";
+      } else if (head.x >= canvas.width / tileSize) {
+        head.x = canvas.width / tileSize - 1;
+        newDirection = head.y < canvas.height / tileSize / 2 ? "down" : "up";
+      } else if (head.y < 0) {
+        head.y = 0;
+        newDirection = head.x < canvas.width / tileSize / 2 ? "right" : "left";
+      } else if (head.y >= canvas.height / tileSize) {
+        head.y = canvas.height / tileSize - 1;
+        newDirection = head.x < canvas.width / tileSize / 2 ? "right" : "left";
+      }
+    } else {
+      endGame();
+    }
+  } else if (hasCollisionWithSelf) {
     endGame();
   }
+}
+
+// Verifica colisão da cobra consigo mesma
+function isSnakeCollision(head) {
+  for (var i = 1; i < snake.length; i++) {
+    if (
+      Math.abs(head.x - snake[i].x) < 1 &&
+      Math.abs(head.y - snake[i].y) < 1
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Verifica colisão com a maçã
@@ -138,6 +231,16 @@ function checkAppleCollision() {
   }
 }
 
+// Verifica colisão com power-up
+function checkPowerUpCollision() {
+  var head = snake[0];
+
+  if (powerUp && head.x === powerUp.x && head.y === powerUp.y) {
+    activatePowerUp();
+    powerUp = null; // Remover o power-up do campo
+  }
+}
+
 // Verifica colisão da cobra consigo mesma
 function isSnakeCollision(head) {
   for (var i = 1; i < snake.length; i++) {
@@ -148,11 +251,39 @@ function isSnakeCollision(head) {
   return false;
 }
 
-// Gera a posição de uma nova maçã aleatoriamente, evitando a posição ocupada pela cobra
+// Gera a posição de uma nova maçã aleatoriamente, evitando a posição ocupada pela cobra e uma distância mínima da cobra
 function generateApple() {
   var validPosition = false;
-  var randomX, randomY; // Move a declaração para fora do loop
-  
+  var randomX, randomY;
+
+  while (!validPosition) {
+    randomX = Math.floor(Math.random() * (canvas.width / tileSize));
+    randomY = Math.floor(Math.random() * (canvas.height / tileSize));
+
+    validPosition = true;
+
+    // Verifica se a posição gerada está ocupada pela cobra ou próxima da cobra
+    for (var i = 0; i < snake.length; i++) {
+      if (snake[i].x === randomX && snake[i].y === randomY) {
+        validPosition = false;
+        break;
+      }
+      if (Math.abs(snake[i].x - randomX) < 2 && Math.abs(snake[i].y - randomY) < 2) {
+        validPosition = false;
+        break;
+      }
+    }
+  }
+
+  apple.x = randomX;
+  apple.y = randomY;
+}
+
+// Gera um novo power-up aleatoriamente
+function generatePowerUp() {
+  var validPosition = false;
+  var randomX, randomY;
+
   while (!validPosition) {
     randomX = Math.floor(Math.random() * (canvas.width / tileSize));
     randomY = Math.floor(Math.random() * (canvas.height / tileSize));
@@ -166,10 +297,45 @@ function generateApple() {
         break;
       }
     }
+
+    // Verifica se a posição gerada está ocupada pela maçã
+    if (randomX === apple.x && randomY === apple.y) {
+      validPosition = false;
+    }
   }
 
-  apple.x = randomX;
-  apple.y = randomY;
+  powerUp = { x: randomX, y: randomY };
+  powerUpType = Math.random() < 0.5 ? "speed" : "immunity";
+}
+
+// Ativa o power-up
+function activatePowerUp() {
+  powerUpActive = true;
+
+  switch (powerUpType) {
+    case "speed":
+      clearInterval(gameInterval);
+      gameSpeed /= 2; // Aumenta a velocidade do jogo
+      gameInterval = setInterval(gameLoop, gameSpeed);
+      powerUpTimeout = setTimeout(deactivatePowerUp, 5000); // Power-up dura 5 segundos
+      break;
+    case "immunity":
+      powerUpTimeout = setTimeout(deactivatePowerUp, 5000); // Power-up dura 5 segundos
+      break;
+  }
+}
+
+// Desativa o power-up
+function deactivatePowerUp() {
+  powerUpActive = false;
+
+  if (powerUpType === "speed") {
+    clearInterval(gameInterval);
+    gameSpeed *= 2; // Restaura a velocidade do jogo
+    gameInterval = setInterval(gameLoop, gameSpeed);
+  }
+
+  generatePowerUp();
 }
 
 // Aumenta o tamanho da cobra
@@ -184,6 +350,21 @@ function endGame() {
   score = 0;
   gameStarted = false; // O jogo foi finalizado
   firstMove = true;
+  clearInterval(gameInterval); // Parar o loop do jogo
+  isPaused = false; // Resetar o estado de pausa
+  document.getElementById("pauseButton").textContent = "Pausar"; // Resetar o texto do botão de pausa
+
+  // Desativar qualquer power-up ativo
+  if (powerUpActive) {
+    clearTimeout(powerUpTimeout);
+    powerUpActive = false;
+    if (powerUpType === "speed") {
+      gameSpeed *= 2; // Restaura a velocidade do jogo se estiver sob efeito de speed
+    }
+  }
+
+  // Gerar um novo power-up
+  generatePowerUp();
 }
 
 // Limpa o canvas
@@ -192,10 +373,11 @@ function clearCanvas() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-// Desenha a cobra, a maçã e as informações do jogo
+// Desenha a cobra, a maçã, o power-up e as informações do jogo
 function draw() {
   drawSnake();
   drawApple();
+  drawPowerUp();
 }
 
 // Desenha a cobra
@@ -261,6 +443,16 @@ function drawApple() {
   ctx.stroke();
 }
 
+// Desenha o power-up
+function drawPowerUp() {
+  if (powerUp) {
+    ctx.fillStyle = powerUpType === "speed" ? "blue" : "green";
+    ctx.beginPath();
+    ctx.arc(powerUp.x * tileSize + tileSize / 2, powerUp.y * tileSize + tileSize / 2, tileSize / 2, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+}
+
 // Atualiza o score e high score
 function updateScore() {
   scoreElement.textContent = score;
@@ -273,6 +465,7 @@ function keyDown(event) {
     // Inicia o jogo ao pressionar qualquer botão do teclado
     gameStarted = true;
     closeInstructionBalloon();
+    gameInterval = setInterval(gameLoop, gameSpeed); // Inicia o loop do jogo
   }
 
   switch (event.keyCode) {
@@ -313,5 +506,4 @@ function closeInstructionBalloon() {
 // Inicializa o jogo ao carregar a página
 window.onload = function () {
   init();
-  setInterval(gameLoop, 100);
 };

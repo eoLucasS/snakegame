@@ -27,9 +27,9 @@ $$$$$$$$\\$$$$$$  |\$$$$$$$\\$$$$$$$ |$$$$$$$  |      $$$$$$$$\\$$$$$$  |$$$$$$$
 </h1>
 
 <p align="center">
-  <img alt="Github Top Language" src="https://img.shields.io/github/languages/top/eolucass/Sorting-and-Evaluation-of-Game-Data?color=00FFFB">
-  <img alt="Github Language Count" src="https://img.shields.io/github/languages/count/eolucass/Sorting-and-Evaluation-of-Game-Data?color=00FFFB">
-  <img alt="Repository Size" src="https://img.shields.io/github/repo-size/eolucass/Sorting-and-Evaluation-of-Game-Data?color=00FFFB">
+  <img alt="Github Top Language" src="https://img.shields.io/github/languages/top/eolucass/snakegame?color=00FFFB">
+  <img alt="Github Language Count" src="https://img.shields.io/github/languages/count/eolucass/snakegame?color=00FFFB">
+  <img alt="Repository Size" src="https://img.shields.io/github/repo-size/eolucass/snakegame?color=00FFFB">
 </p>
 
 <br>
